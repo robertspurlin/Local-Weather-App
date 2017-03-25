@@ -32,21 +32,19 @@ $(document).ready(function() {
 });
 
 // Initial definition of global variables
-var temperature, latitude, longitude, unit = "";
+var temperature, city, unit, fullLocation, apiLink = "";
 
-function locationFinder() {   
-    if (navigator.geolocation) {
-  		navigator.geolocation.getCurrentPosition(function(position) {
-    		latitude = position.coords.latitude;
-    		longitude = position.coords.longitude;
-  		});
-	}	    	
+function locationFinder() {
+	$.getJSON("https://ipinfo.io/geo").done(function(response) {
+  		city = response.city;
+  		fullLocation = response.city + ", " + response.region;
+	});	    	
 }
     
 // Waits for latitude and longitude to fill before it calls the if 
 function apiCall() {
-	if (typeof latitude !== "undefined" && typeof longitude !== "undefined") {
-		var apiLink = "http://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&APPID=576ee27d965b31a73dccacba92eb4567";
+	if (typeof city !== "undefined") {
+		apiLink = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=imperial&APPID=576ee27d965b31a73dccacba92eb4567";
 		$.getJSON(apiLink).done(update).fail(error);
 
 		function update(response) {
@@ -55,11 +53,10 @@ function apiCall() {
 			unit = "F";
 			var description = response.weather[0].main;
 			temperature = Math.round(response.main.temp);
-			var city = response.name;
 			
 			var iconLink = "http://openweathermap.org/img/w/" + response.weather[0].icon + ".png";
 
-			$("#city").html("<h3>" + city + "</h3>");
+			$("#city").html("<h3>" + fullLocation + "</h3>");
 			$("#description").html(description + " | " + "<a href='#' id='change'>" + temperature + "&#176;" + unit + "</a>");
 			$("#icon").html('<img src="' + iconLink + '">');
 		
