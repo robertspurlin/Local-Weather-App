@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	
+
     $(window).resize(function() {
         var homeHeight = $(this).height();
         var hCenter = (($(this).height() /2) - ($("#box").height() /2));
@@ -10,9 +10,8 @@ $(document).ready(function() {
     locationFinder();
     apiCall();
 
-    
     // Unit changer (F to C, vice versa). Tagged to body due to API
-	$("body").on("click", "a", function(e) {
+	$("body").on("click", "#change", function(e) {
     	if (unit === "F") {
     		temperature = (temperature - 32) * 5 / 9;
     		unit = "C";
@@ -27,7 +26,7 @@ $(document).ready(function() {
     	e.preventDefault();
 	});
 
-// End of (document).ready 
+// End of (document).ready
 
 });
 
@@ -36,51 +35,39 @@ var temperature, city, unit, fullLocation, apiLink = "";
 
 function locationFinder() {
 	$.getJSON("https://ipinfo.io/geo").done(function(response) {
-  		city = response.city;
+  		city = response.city; // Leave here, needs to be filled for Weather API
   		fullLocation = response.city + ", " + response.region;
-	});	    	
+	}).fail(error);
 }
-    
-// Waits for latitude and longitude to fill before it calls the if 
+
+// Waits for city to fill before it calls the if
 function apiCall() {
 	if (typeof city !== "undefined") {
-		apiLink = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=imperial&APPID=576ee27d965b31a73dccacba92eb4567";
+		apiLink = "https://api.apixu.com/v1/current.json?key=5cb736ef916f42e79c2183020171108&q=" + city;
 		$.getJSON(apiLink).done(update).fail(error);
 
 		function update(response) {
-			
+
 			// Units are F, initial setting. &units=imperial
 			unit = "F";
-			var description = response.weather[0].main;
-			temperature = Math.round(response.main.temp);
-			
-			var iconLink = "http://openweathermap.org/img/w/" + response.weather[0].icon + ".png";
+			var description = response.current.condition.text;
+			temperature = Math.round(response.current.temp_f);
+
+			var iconLink = "https://" + response.current.condition.icon;
 
 			$("#city").html("<h3>" + fullLocation + "</h3>");
 			$("#description").html(description + " | " + "<a href='#' id='change'>" + temperature + "&#176;" + unit + "</a>");
 			$("#icon").html('<img src="' + iconLink + '">');
-		
-			// Changes background color based on timestamp. ts defines current timestamp
-			var ts = Math.round((new Date()).getTime() / 1000);
-			var sunset = response.sys.sunset;
-			var sunrise = response.sys.sunrise;
-
-			if (ts < sunset) {
-				$("#background").animate({backgroundColor: '#000000'}, 'slow');
-			}
-
-			else {
-				$("#background").animate({backgroundColor: '#77B5FE'}, 'slow');
-			}
 		}
 	}
-		
+
 	else {
 		setTimeout(apiCall, 100);
 	}
 }
-	
+
 // Only runs when JSON fails or server responds with anything other than expected
 function error() {
 	$("#city").html("There has been an error.</br>Try again later!");
+	$("#description").html("");
 }
